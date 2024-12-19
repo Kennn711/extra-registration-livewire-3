@@ -70,7 +70,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="table-responsive">
+                <div class="table-responsive" wire:ignore>
                     <table id="basic-datatables" class="display table table-striped table-hover">
                         <thead>
                             <tr>
