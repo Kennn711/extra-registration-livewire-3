@@ -63,7 +63,7 @@
                     </form>
                 </div>
                 <div class="modal-footer border-0 justify-content-center">
-                    <button wire:click.prevent="store" class="btn btn-warning">Ubah</button>
+                    <button wire:click.prevent="update" class="btn btn-warning">Ubah</button>
                 </div>
             </div>
         </div>

@@ -3,6 +3,7 @@
 namespace App\Livewire\Student;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Title;
 use Livewire\Attributes\Validate;
@@ -78,6 +79,8 @@ class Data extends Component
             $validasi['avatar'] = $this->avatar->storePubliclyAs('student', $avatarName, 'public');
         }
 
+        $validasi['password'] = Hash::make($this->password);
+
         $validasi['role'] = 'student';
 
         $execute = User::create($validasi);
@@ -109,6 +112,35 @@ class Data extends Component
         $this->email = $editStudent->email;
         $this->oldAvatar = $editStudent->avatar;
         $this->isCreateForm = false;
+    }
+
+    public function update()
+    {
+        // Find ID (didadekno variabel ben sintaks e kyk laravel biasa ne wkwk)
+        $student = User::where('id', $this->studentId);
+
+        $validasi = $this->validate();
+
+        $oldAvatar = $this->oldAvatar;
+
+        if (!empty($validasi['avatar'])) {
+            if (!empty($oldAvatar)) {
+                Storage::disk('public')->delete($oldAvatar);
+                $avatarName = rand(1000, 9999) . date('ymdHis') . '.' . $this->avatar->getClientOriginalExtension();
+                $validasi['avatar'] = $this->avatar->storePubliclyAs('student', $avatarName, 'public');
+            } else {
+                $avatarName = rand(1000, 9999) . date('ymdHis') . '.' . $this->avatar->getClientOriginalExtension();
+                $validasi['avatar'] = $this->avatar->storePubliclyAs('student', $avatarName, 'public');
+            }
+        }
+
+        if (!empty($validasi['password'])) {
+            $validasi['password'] = Hash::make($this->password);
+        }
+
+        $student->update($validasi);
+
+        return $this->redirectRoute('student.index', navigate: true);
     }
 
     public function destroy(User $student)
