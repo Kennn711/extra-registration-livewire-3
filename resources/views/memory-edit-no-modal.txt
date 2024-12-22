@@ -1,0 +1,176 @@
+<?php
+
+namespace App\Livewire\Student;
+
+use App\Models\User;
+use Illuminate\Container\Attributes\Storage;
+use Illuminate\Support\Facades\Storage as FacadesStorage;
+use Livewire\Attributes\Title;
+use Livewire\Attributes\Validate;
+use Livewire\Component;
+use Livewire\WithFileUploads;
+
+class FormEdit extends Component
+{
+    use WithFileUploads;
+
+    public $studentId;
+
+    #[Validate('required', message: "Name is required !")]
+    #[Validate('min:3', message: "Name must be 3 chars minimum long !")]
+    public $name;
+
+    #[Validate('required', message: "Email is required !")]
+    public $email;
+
+    public $password;
+
+    public $oldPassword;
+
+    #[Validate('nullable', message: "File must be an image !")]
+    #[Validate('max:2048', message: "Image must be not more than 2 MB !")]
+    #[Validate('mimes:jpg,jpeg,webp,png', message: "Image must be jpg, jpeg, webp, / png !")]
+    public $avatar;
+
+    public $oldAvatar;
+
+    #[Title('Registrasi Ekstra | Edit Akun Siswa')]
+
+    public function mount($id)
+    {
+        $student = User::find($id);
+
+        $this->studentId = $student->id;
+        $this->name = $student->name;
+        $this->email = $student->email;
+        $this->oldPassword = $student->password;
+        $this->oldAvatar = $student->avatar;
+    }
+
+    public function validationClass($field)
+    {
+        if ($this->getErrorBag()->has($field)) {
+            return 'is-invalid';
+        } else {
+            return isset($this->$field) ? 'is-valid' : '';
+        }
+    }
+
+    public function update()
+    {
+        $validasi = $this->validate();
+
+        if ($this->avatar) {
+            if ($this->oldAvatar && FacadesStorage::disk('public')->exists($this->oldAvatar)) {
+                FacadesStorage::disk('public')->delete($this->oldAvatar);
+            }
+
+            $newAvatar = rand(1000, 9999) . date('ymdHis') . '.' . $this->avatar->getClientOriginalExtension();
+            $validasi['avatar'] = $this->avatar->storePubliclyAs('student', $newAvatar, 'public');
+        } else {
+            $validasi['avatar'] = $this->oldAvatar;
+        }
+
+        if ($this->password) {
+            $validasi['password'] = bcrypt($this->password);
+        } else {
+            $validasi['password'] = $this->oldPassword;
+        }
+
+        $student = User::find($this->studentId);
+        $execute = $student->update($validasi);
+
+        if ($execute) {
+            session()->flash('message', 'Berhasil edit akun !');
+            session()->flash('type-message', 'success');
+        } else {
+            session()->flash('message', 'Gagal edit akun !');
+            session()->flash('type-message', 'error');
+        }
+
+        return $this->redirectRoute('student.index', navigate: true);
+    }
+
+    public function render()
+    {
+        return view('livewire.student.form-edit');
+    }
+}
+
+
+
+
+
+
+
+
+
+
+<div>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h3 class="fw-bold">Edit Akun Siswa</h3>
+                    <a href="{{ route('student.index') }}" wire:navigate class="btn btn-warning btn-md">Kembali</a>
+                </div>
+                <div class="card shadow">
+                    <div class="card-body">
+                        <form wire:submit.prevent="update" method="POST">
+                            <div class="form-group">
+                                <label class="fw-bold h2">Name</label>
+                                <input type="text" wire:model.live="name" class="form-control  {{ $this->validationClass('name') }}">
+                                @error('name')
+                                    <span class="text-danger position-absolute">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <div class="row justify-content-between">
+                                    <div class="col-md-6">
+                                        <label class="fw-bold h2">Email</label>
+                                        <input type="email" wire:model.live="email" class="form-control  {{ $this->validationClass('email') }}">
+                                        @error('email')
+                                        @enderror
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="fw-bold h2">Password</label>
+                                        <input type="password" wire:model.live="password" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row justify-content-between">
+                                    <div class="col-md-6">
+                                        <label class="fw-bold h2">Foto Profil yang lama</label>
+                                        <div class="d-flex justify-content-center mt-5">
+                                            @if (!empty($oldAvatar))
+                                                <img src="{{ Storage::url($oldAvatar) }}" width="200" class="img-fluid rounded-circle">
+                                            @else
+                                                <p>Tidak ada foto profil</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="fw-bold h2">Masukkan foto profil yang baru</label>
+                                        <input type="file" wire:model="avatar" class="form-control">
+                                        @error('avatar')
+                                            <span class="text-danger position-absolute">{{ $message }}</span>
+                                        @enderror
+                                        @if (is_object($avatar))
+                                            <div class="d-flex justify-content-center mt-2">
+                                                <img src="{{ $avatar->temporaryUrl() }}" class="img-fluid rounded-circle w-50">
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-center mt-3">
+                                <button class="btn btn-warning btn-md">Ubah</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -17,6 +17,9 @@ class Data extends Component
 
     public $student;
 
+    public $studentId;
+    public $isCreateForm = true;
+
     #[Validate('required', message: "Name is required !")]
     #[Validate('min:3', message: "Name must be 3 chars minimum long !")]
     public $name;
@@ -32,6 +35,8 @@ class Data extends Component
     #[Validate('mimes:jpg,jpeg,webp,png', message: "Image must be jpg, jpeg, webp, / png !")]
     public $avatar;
 
+    public $oldAvatar;
+
     public function save()
     {
         $validatedData = $this->validate();
@@ -44,11 +49,24 @@ class Data extends Component
 
     public function validationClass($field)
     {
+        if ($this->isCreateForm && empty($this->$field)) {
+            return '';
+        }
+
         if ($this->getErrorBag()->has($field)) {
             return 'is-invalid';
         }
 
         return isset($this->$field) ? 'is-valid' : '';
+    }
+
+    public function resetCreateForm()
+    {
+        $this->name = '';
+        $this->email = '';
+        $this->password = '';
+        $this->avatar = null;
+        $this->isCreateForm = true;
     }
 
     public function store()
@@ -72,12 +90,25 @@ class Data extends Component
             session()->flash('type-message', 'error');
         }
 
-        return $this->redirectRoute('student.index', navigate: true);
+        $this->reset(['name', 'email', 'password', 'avatar']);
+
+        $this->redirectRoute('student.index', navigate: true);
     }
 
     public function mount()
     {
         $this->student = User::where('role', 'student')->get();
+    }
+
+    public function edit($id)
+    {
+        $editStudent = User::find($id);
+
+        $this->studentId = $editStudent->id;
+        $this->name = $editStudent->name;
+        $this->email = $editStudent->email;
+        $this->oldAvatar = $editStudent->avatar;
+        $this->isCreateForm = false;
     }
 
     public function destroy(User $student)

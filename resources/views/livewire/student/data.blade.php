@@ -4,7 +4,9 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4 class="card-title">Data Siswa</h4>
-                    <button class="btn btn-success btn-md" data-bs-toggle="modal" data-bs-target="#addStudent">Tambah</button>
+                    <button class="btn btn-success" wire:click="resetCreateForm" data-bs-toggle="modal" data-bs-target="#addStudent">
+                        <i class="bi bi-plus-square h3"></i>
+                    </button>
                 </div>
             </div>
             <div class="card-body">
@@ -19,6 +21,11 @@
                             <div class="modal-body">
                                 <form>
                                     <div class="row">
+                                        @if (is_object($avatar))
+                                            <div class="d-flex justify-content-center">
+                                                <img src="{{ $avatar->temporaryUrl() }}" alt="" class="img-fluid w-50 rounded-circle">
+                                            </div>
+                                        @endif
                                         <div class="col-sm-12">
                                             <div class="form-group">
                                                 <label class="fw-bold">Nama Lengkap</label>
@@ -53,12 +60,6 @@
                                                 @error('avatar')
                                                     <span class="text-danger position-absolute">{{ $message }}</span>
                                                 @enderror
-
-                                                @if (is_object($avatar))
-                                                    <div class="d-flex justify-content-center">
-                                                        <img src="{{ $avatar->temporaryUrl() }}" alt="" class="img-fluid w-50 rounded-circle mt-2">
-                                                    </div>
-                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -70,6 +71,7 @@
                         </div>
                     </div>
                 </div>
+                @include('livewire.student.form-edit')
                 <div class="table-responsive" wire:ignore>
                     <table id="basic-datatables" class="display table table-striped table-hover">
                         <thead>
@@ -104,9 +106,9 @@
                                     </td>
                                     <td>{{ $see->email }}</td>
                                     <td>
-                                        <a href="{{ route('student.edit', $see->id) }}" wire:navigate class="btn" tabindex="-1" style="outline: none; box-shadow: none; border: none;">
+                                        <button data-bs-toggle="modal" wire:click="edit({{ $see->id }})" data-bs-target="#editStudent" class="btn" tabindex="-1" style="outline: none; box-shadow: none; border: none;">
                                             <i class="bi bi-pencil-square text-warning h1"style="outline: none;"></i>
-                                        </a>
+                                        </button>
                                         <button wire:click="destroy({{ $see->id }})" class="btn" tabindex="-1" style="outline: none; box-shadow: none; border: none;">
                                             <i class="bi bi-trash-fill text-danger h1"style="outline: none;"></i>
                                         </button>
