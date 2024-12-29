@@ -3,15 +3,18 @@
 namespace App\Livewire\Leader;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\Validate;
+use Livewire\WithPagination;
+use Livewire\WithoutUrlPagination;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
 class Data extends Component
 {
     use WithFileUploads;
+    use WithPagination, WithoutUrlPagination;
 
     #[Title('Registrasi Ekstra | Data Pembina')]
 
@@ -20,26 +23,25 @@ class Data extends Component
     public $leaderId;
     public $isCreateForm = true;
 
-    #[Validate('required', message: "Name is required !")]
-    #[Validate('min:3', message: "Name must be 3 chars minimum long !")]
     public $name;
-
-    #[Validate('required', message: "Email is required !")]
     public $email;
-
-    #[Validate('required', message: "Password is required !")]
     public $password;
-
-    #[Validate('nullable', message: "File must be an image !")]
-    #[Validate('max:2048', message: "Image must be not more than 2 MB !")]
-    #[Validate('mimes:jpg,jpeg,webp,png', message: "Image must be jpg, jpeg, webp, / png !")]
     public $avatar;
 
     public $oldAvatar;
 
-    public function save()
+    protected $rules = [
+        'name'     => 'required|min:3',
+        'email'    => 'required',
+        'password' => 'required',
+        'avatar'   => 'nullable|mimes:jpg,png,jpeg,webp',
+    ];
+
+    protected $paginationTheme = 'bootstrap';
+
+    public function boot()
     {
-        $validatedData = $this->validate();
+        $this->resetErrorBag();
     }
 
     public function updated($propertyName)
@@ -69,11 +71,6 @@ class Data extends Component
         $this->isCreateForm = true;
     }
 
-    public function mount()
-    {
-        $this->leader = User::where('role', 'leader')->get();
-    }
-
     public function store()
     {
         $validasi = $this->validate();
@@ -83,53 +80,88 @@ class Data extends Component
             $validasi['avatar'] = $this->avatar->storePubliclyAs('leader', $avatarName, 'public');
         }
 
+        $validasi['password'] = Hash::make($this->password);
+
         $validasi['role'] = 'leader';
 
         $execute = User::create($validasi);
 
         if ($execute) {
-            session()->flash('type-message', 'success');
-            session()->flash('message', 'Berhasil tambah akun ' . $validasi['name'] . ' !');
+            session()->flash('message-success', 'Berhasil tambah akun ' . $validasi['name'] . ' !');
         } else {
-            session()->flash('type-message', 'error');
-            session()->flash('message', 'Gagal tambah akun pembina ekstra !');
+            session()->flash('message-error', 'Gagal tambah akun siswa !');
         }
 
-        return $this->redirectRoute('leader.index', navigate: true);
+        $this->dispatch('leaderStore');
+
+        $this->leader = User::where('role', 'leader')->latest()->get();
+    }
+
+    public function edit($id)
+    {
+        $editLeader = User::find($id);
+
+        $this->rules['password'] = 'nullable';
+
+        $this->leaderId = $editLeader->id;
+        $this->name = $editLeader->name;
+        $this->email = $editLeader->email;
+        $this->oldAvatar = $editLeader->avatar;
+        $this->password = '';
+        $this->isCreateForm = false;
+    }
+
+    public function update()
+    {
+        // Find ID (didadekno variabel ben sintaks e kyk laravel biasa wkwk)
+        $leader = User::where('id', $this->leaderId);
+
+        $validasi = $this->validate();
+
+        $oldAvatar = $this->oldAvatar;
+
+        if (!empty($this->avatar)) {
+            if (!empty($oldAvatar)) {
+                Storage::disk('public')->delete($oldAvatar);
+            }
+            $avatarName = rand(1000, 9999) . date('ymdHis') . '.' . $this->avatar->getClientOriginalExtension();
+            $validasi['avatar'] = $this->avatar->storePubliclyAs('leader', $avatarName, 'public');
+        } else {
+            $validasi['avatar'] = $oldAvatar;
+        }
+
+
+        if (!empty($validasi['password'])) {
+            $validasi['password'] = Hash::make($this->password);
+        }
+
+        $leader->update($validasi);
+
+        session()->flash('message-success', 'Berhasil update akun ' . $validasi['name'] . ' !');
+
+        $this->dispatch('leaderStore');
     }
 
     public function destroy(User $leader)
     {
-        $namaLeader = $leader->name;
-
         if ($leader) {
             if (empty($leader->avatar)) {
                 $leader->delete();
-                session()->flash('type-message', 'success');
-                session()->flash('message', 'Berhasil hapus akun ' . $namaLeader . ' !');
+                session()->flash('message-success', 'Berhasil hapus akun ' . $leader->name . ' !');
             } else {
                 Storage::disk('public')->delete($leader->avatar);
                 $leader->delete();
-                session()->flash('type-message', 'success');
-                session()->flash('message', 'Berhasil hapus akun ' . $namaLeader . ' !');
+                session()->flash('message-error', 'Berhasil hapus akun ' . $leader->name . ' !');
             }
         }
 
         return $this->redirectRoute('leader.index', navigate: true);
     }
 
-    public function edit($id)
-    {
-        $editleader = User::find($id);
-
-        $this->leaderId = $editleader->id;
-        $this->name = $editleader->name;
-        $this->email = $editleader->email;
-        $this->oldAvatar = $editleader->avatar;
-    }
-
     public function render()
     {
-        return view('livewire.leader.data');
+        return view('livewire.leader.data', [
+            'data' => User::where('role', 'leader')->latest()->paginate(3)
+        ]);
     }
 }

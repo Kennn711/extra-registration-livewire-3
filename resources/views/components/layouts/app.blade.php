@@ -26,7 +26,7 @@
     <!-- CSS Files -->
     <link rel="stylesheet" href="{{ asset('backend') }}/assets/css/bootstrap.min.css">
     <link rel="stylesheet" href="{{ asset('backend') }}/assets/css/plugins.min.css">
-    <link rel="stylesheet" href="{{ asset('backend') }}/assets/css/kaiadmin.min.css">
+    <link rel="stylesheet" href="{{ asset('backend') }}/assets/css/kaiadmin.css">
     <link rel="stylesheet" href="{{ asset('assets/bootstrap-icons-1.11.3/font/bootstrap-icons.min.css') }}">
     <link rel="stylesheet" href="{{ asset('backend/assets/sweetalert/sweetalert.min.css') }}">
 
@@ -99,12 +99,25 @@
     <!-- Sweet Alert -->
     {{-- <script src="{{ asset('backend') }}/assets/js/plugin/sweetalert/sweetalert.min.js"></script> --}}
     <script src="{{ asset('backend/assets/sweetalert/sweetalert.min.js') }}"></script>
-    @if (session('message'))
+    @if (session('message-success'))
         <script>
             Swal.fire({
                 position: "top",
-                icon: "{{ session('type-message') }}",
-                title: "{!! session('message') !!}",
+                icon: "success",
+                title: "{!! session('message-success') !!}",
+                showConfirmButton: false,
+                toast: true,
+                timer: 2500,
+                timerProgressBar: true,
+            });
+        </script>
+    @endif
+    @if (session('message-error'))
+        <script>
+            Swal.fire({
+                position: "top",
+                icon: "error",
+                title: "{!! session('message-error') !!}",
                 showConfirmButton: false,
                 toast: true,
                 timer: 2500,
@@ -145,6 +158,7 @@
             $('#basic-datatables').DataTable({});
         });
     </script>
+    @stack('scripts')
 </body>
 
 </html>

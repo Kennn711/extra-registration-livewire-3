@@ -72,53 +72,69 @@
                     </div>
                 </div>
                 @include('livewire.student.form-edit')
-                <div class="table-responsive" wire:ignore>
-                    <table id="basic-datatables" class="display table table-striped table-hover">
-                        <thead>
+                <table class="table table-striped table-hover">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <form>
+                            <p class="fw-bold">Search :
+                                <input type="text">
+                            </p>
+                        </form>
+                    </div>
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Lengkap</th>
+                            <th>Email</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tfoot>
+                        <tr>
+                            <th>No</th>
+                            <th>Nama Lengkap</th>
+                            <th>Email</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </tfoot>
+                    <tbody>
+                        @foreach ($data as $see)
                             <tr>
-                                <th>No</th>
-                                <th>Nama Lengkap</th>
-                                <th>Email</th>
-                                <th>Aksi</th>
+                                <td>{{ $loop->iteration }}</td>
+                                <td>
+                                    <div class="avatar">
+                                        @if (empty($see->avatar))
+                                            <img src="{{ asset('uploads/empty-avatar.webp') }}" class="avatar-img rounded-circle">
+                                        @else
+                                            <img src="{{ Storage::url($see->avatar) }}" class="avatar-img rounded-circle">
+                                        @endif
+                                    </div>
+                                    {{ $see->name }}
+                                </td>
+                                <td>{{ $see->email }}</td>
+                                <td>
+                                    <button data-bs-toggle="modal" wire:click="edit({{ $see->id }})" data-bs-target="#editStudent" class="btn" tabindex="-1" style="outline: none; box-shadow: none; border: none;">
+                                        <i class="bi bi-pencil-square text-warning h1"style="outline: none;"></i>
+                                    </button>
+                                    <button wire:click="destroy({{ $see->id }})" class="btn" tabindex="-1" style="outline: none; box-shadow: none; border: none;">
+                                        <i class="bi bi-trash-fill text-danger h1"style="outline: none;"></i>
+                                    </button>
+                                </td>
                             </tr>
-                        </thead>
-                        <tfoot>
-                            <tr>
-                                <th>No</th>
-                                <th>Nama Lengkap</th>
-                                <th>Email</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </tfoot>
-                        <tbody>
-                            @foreach ($student as $see)
-                                <tr>
-                                    <td>{{ $loop->iteration }}</td>
-                                    <td>
-                                        <div class="avatar">
-                                            @if (empty($see->avatar))
-                                                <img src="{{ asset('uploads/empty-avatar.webp') }}" class="avatar-img rounded-circle">
-                                            @else
-                                                <img src="{{ Storage::url($see->avatar) }}" class="avatar-img rounded-circle">
-                                            @endif
-                                        </div>
-                                        {{ $see->name }}
-                                    </td>
-                                    <td>{{ $see->email }}</td>
-                                    <td>
-                                        <button data-bs-toggle="modal" wire:click="edit({{ $see->id }})" data-bs-target="#editStudent" class="btn" tabindex="-1" style="outline: none; box-shadow: none; border: none;">
-                                            <i class="bi bi-pencil-square text-warning h1"style="outline: none;"></i>
-                                        </button>
-                                        <button wire:click="destroy({{ $see->id }})" class="btn" tabindex="-1" style="outline: none; box-shadow: none; border: none;">
-                                            <i class="bi bi-trash-fill text-danger h1"style="outline: none;"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
+                        @endforeach
+                    </tbody>
+                </table>
+                {{ $data->links() }}
             </div>
         </div>
     </div>
 </div>
+
+@push('scripts')
+    @livewireScripts
+    <script>
+        Livewire.on('studentStore', () => {
+            $('#addStudent').modal('hide');
+            $('#editStudent').modal('hide');
+        });
+    </script>
+@endpush
