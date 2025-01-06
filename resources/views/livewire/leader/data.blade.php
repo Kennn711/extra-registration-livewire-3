@@ -71,7 +71,7 @@
                         </div>
                     </div>
                 </div>
-                @include('livewire.student.form-edit')
+                @include('livewire.leader.form-edit')
                 <table class="table table-striped table-hover">
                     <div class="d-flex justify-content-end align-items-center">
                         <form>
